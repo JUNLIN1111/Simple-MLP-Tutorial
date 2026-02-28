@@ -1,153 +1,187 @@
-
+# =====================================================================
+# 🌟 Kawaii-Style MLP – Gradient Descent Adventure ♡
+# =====================================================================
+#
+#  A cheerful, hand-written Multi-Layer Perceptron using only NumPy!
+#  Perfect for learning how gradient descent and backpropagation really work.
+#
+#  You will see:
+#  • Forward pass with cozy tanh activation
+#  • MSE loss
+#  • Every gradient calculation step-by-step
+#  • Gentle parameter updates via gradient descent
+#
+#  Goal of this demo:
+#  Watch the loss happily go down while the network learns to approximate
+#  y ≈ sin(x₁ + x₂) + a little noise   ✨
+#
+#  Just run this file and enjoy the journey! 🍰
+#
+#  Dependencies: numpy, matplotlib (for the pretty loss curve)
+#
+# =====================================================================
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 class KawaiiMLP:
-    """✨ Our tiny cute baby neural network puppy ♡"""
+    """✨ Friendly 3-layer MLP ready for gradient descent fun! ♡"""
 
-    def __init__(self, in_dim=6, hidden=32, out_dim=4, lr=0.005):
+    def __init__(self, in_dim=2, hidden=32, out_dim=1, lr=0.015):
         """
-        Hello baby! Let's make a cute little brain together~ ♡
+        Hello friend! Let's create a cute little network together~ ♡
         
-        Parameters:
-            in_dim    → how many things baby can see (default 6)
-            hidden    → how many thinking neurons in each hidden hug layer
-            out_dim   → how many wiggly actions baby can do
-            lr        → learning speed (small = gentle learning)
+        Args:
+            in_dim    → number of input features
+            hidden    → neurons in each hidden layer (the thinking buddies)
+            out_dim   → number of outputs
+            lr        → learning rate (how big each happy step is)
         """
         self.lr = lr
-        
-        # Baby's connections (weights) and little biases
+
+        # Small random weights so we start gently
         self.w1 = (np.random.randn(in_dim, hidden) * 0.12).astype(np.float32)
         self.b1 = np.zeros(hidden, dtype=np.float32)
-        
+
         self.w2 = (np.random.randn(hidden, hidden) * 0.12).astype(np.float32)
         self.b2 = np.zeros(hidden, dtype=np.float32)
-        
+
         self.w3 = (np.random.randn(hidden, out_dim) * 0.08).astype(np.float32)
         self.b3 = np.zeros(out_dim, dtype=np.float32)
 
     def forward(self, x):
-        """Baby thinks really hard and gives wiggly answer! ♡"""
-        h1 = np.tanh(x @ self.w1 + self.b1)          # first cozy hug layer
-        h2 = np.tanh(h1 @ self.w2 + self.b2)         # second cozy hug layer
-        y  = np.tanh(h2 @ self.w3 + self.b3)         # final cute action
-        
+        """Forward pass — thinking really hard! ♡"""
+        h1 = np.tanh(np.dot(x, self.w1) + self.b1)     # first hug layer
+        h2 = np.tanh(np.dot(h1, self.w2) + self.b2)    # second hug layer
+        y  = np.tanh(np.dot(h2, self.w3) + self.b3)    # final answer
+
         return y, (x, h1, h2, y)
 
-    def train_batch(self, x_batch, y_batch_norm):
+    def train_batch(self, x_batch, y_batch):
         """
-        Baby practices and gets smarter with every try~!
-        Returns how confused baby was (loss) 💦
+        One gradient descent step — learning and growing stronger! ✨
+        Returns current MSE loss so we can cheer when it drops ♡
         """
         y_pred, (x, h1, h2, y_out) = self.forward(x_batch)
-        
-        diff = y_pred - y_batch_norm
-        loss = float(np.mean(diff * diff))           # how much baby missed
-        
+
+        # How far off were we?
+        diff = y_pred - y_batch
+        loss = np.mean(diff ** 2)
+
         n = x.shape[0]
         dy = (2.0 / n) * diff
-        
-        # Backpropagation = giving gentle correction hugs ♡
-        dz3 = dy * (1.0 - y_out * y_out)
-        gw3 = h2.T @ dz3
+
+        # Backpropagation = sending love notes backward to fix mistakes ♡
+        dz3 = dy * (1.0 - y_out ** 2)
+        gw3 = np.dot(h2.T, dz3)
         gb3 = np.sum(dz3, axis=0)
-        
-        dh2 = dz3 @ self.w3.T
-        dz2 = dh2 * (1.0 - h2 * h2)
-        gw2 = h1.T @ dz2
+
+        dh2 = np.dot(dz3, self.w3.T)
+        dz2 = dh2 * (1.0 - h2 ** 2)
+        gw2 = np.dot(h1.T, dz2)
         gb2 = np.sum(dz2, axis=0)
-        
-        dh1 = dz2 @ self.w2.T
-        dz1 = dh1 * (1.0 - h1 * h1)
-        gw1 = x.T @ dz1
+
+        dh1 = np.dot(dz2, self.w2.T)
+        dz1 = dh1 * (1.0 - h1 ** 2)
+        gw1 = np.dot(x.T, dz1)
         gb1 = np.sum(dz1, axis=0)
-        
-        # Update baby's brain with tiny happy steps
+
+        # Happy updates!
         self.w3 -= self.lr * gw3
         self.b3 -= self.lr * gb3
         self.w2 -= self.lr * gw2
         self.b2 -= self.lr * gb2
         self.w1 -= self.lr * gw1
         self.b1 -= self.lr * gb1
-        
+
         return loss
 
     def __repr__(self):
-        return f"✨ KawaiiMLP ✨ (input={self.w1.shape[0]}, hidden={self.w1.shape[1]}, output={self.b3.shape[0]}) ♡ lr={self.lr}"
+        return (f"✨ KawaiiMLP ✨  (in={self.w1.shape[0]}, hidden={self.w1.shape[1]}, "
+                f"out={self.b3.shape[0]}, lr={self.lr:.4f}) ♡")
 
 
 # ────────────────────────────────────────────────────────────────
-#  Cute Demo: Baby Robot Learning to Reach the Shiny Apple 🍎🐾
+#   ✨ Fun Demo: Learning sin(x₁ + x₂) with gradient descent magic
 # ────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("✨ Starting Baby Robot's Apple Adventure! 🍎💕✨\n")
+    print("✨ Welcome to the Gradient Descent Party! ♡\n")
+    print("Target function:   y ≈ sin(x₁ + x₂) + tiny sparkle noise\n")
+    print("Goal: watch the loss smile and get smaller over time~ 🌸\n")
 
-    # Create our cute little robot brain
-    baby_robot = KawaiiMLP(in_dim=6, hidden=32, out_dim=4, lr=0.005)
-    print(baby_robot, "\n")
+    # ── Meet our friendly network ────────────────────────────────
+    model = KawaiiMLP(in_dim=2, hidden=32, out_dim=1, lr=0.015)
+    print(model, "\n")
 
-    # Make pretend playground data
-    N = 3000
-    x_train = np.random.uniform(-1, 1, (N, 6))              # [curr_x,y, targ_x,y, plan_dx,dy]
-    dist = x_train[:, 2:4] - x_train[:, 0:2]                # apple - me!
-    y_train = np.tanh(np.hstack([dist, dist * 0.6]))        # good wiggles
+    # ── Prepare playful training data ─────────────────────────────
+    np.random.seed(42)
+    N = 4000
+    x_train = np.random.uniform(-3.0, 3.0, (N, 2))
+    y_true = np.sin(x_train[:, 0] + x_train[:, 1])[:, np.newaxis]
+    y_train = y_true + np.random.randn(N, 1) * 0.07
+    y_train = np.tanh(y_train)   # keep outputs cozy in [-1, 1]
 
-    losses = []
-    epochs = 250
+    # ── Training time! Let's cheer every few steps ────────────────
+    epochs = 400
     batch_size = 64
+    losses = []
 
-    print("Baby is practicing really hard... ฅ^•ﻌ•^ฅ\n")
+    print(f"Starting training for {epochs} epochs (batch={batch_size}) …\n")
 
     for epoch in range(epochs):
-        # Shuffle toys so baby doesn't memorize order
         idx = np.random.permutation(N)
         x_shuf = x_train[idx]
         y_shuf = y_train[idx]
 
-        total_loss = 0
-        num_batches = N // batch_size
+        total_loss = 0.0
+        num_batches = 0
 
         for i in range(0, N, batch_size):
-            loss = baby_robot.train_batch(
-                x_shuf[i:i+batch_size],
-                y_shuf[i:i+batch_size]
-            )
+            xb = x_shuf[i:i+batch_size]
+            yb = y_shuf[i:i+batch_size]
+            loss = model.train_batch(xb, yb)
             total_loss += loss
+            num_batches += 1
 
         avg_loss = total_loss / num_batches
         losses.append(avg_loss)
 
-        if epoch % 25 == 0:
-            hearts = "💖" * (epoch // 25 + 1)
-            print(f"Epoch {epoch:3d} | Loss: {avg_loss:.5f}  {hearts}  (getting closer to apple!)")
+        if epoch % 40 == 0 or epoch == epochs - 1:
+            stars = "✨" * (min(epoch // 40 + 1, 5))
+            print(f"Epoch {epoch:3d}   |   loss = {avg_loss:.6f}   {stars}")
 
-    print("\nYayyyy! Baby finished training! 🎉🍎\n")
+    print("\nYayyyy! Training complete~ 🎉♡\n")
 
-    # Show happy learning curve
+    # ── Draw a happy learning curve ───────────────────────────────
     plt.figure(figsize=(10, 5))
-    plt.plot(losses, color='#ff99cc', linewidth=3, marker='o', markersize=4)
-    plt.title("Baby Robot's Learning Adventure 🍎💕", fontsize=16, fontweight='bold')
-    plt.xlabel("Hugs & Epochs", fontsize=12)
-    plt.ylabel("How Confused I Was ♡ (Loss)", fontsize=12)
-    plt.grid(True, alpha=0.3, linestyle='--')
+    plt.plot(losses, color='#ff85a2', linewidth=2.4, marker='o', markersize=3, alpha=0.9)
+    plt.title("Our Network's Happy Learning Journey ♡", fontsize=15, fontweight='bold')
+    plt.xlabel("Epochs (learning steps)", fontsize=12)
+    plt.ylabel("Mean Squared Error (how confused we were)", fontsize=12)
+    plt.grid(True, alpha=0.25, linestyle='--')
     plt.tight_layout()
     plt.show()
 
-    # Final cute test!
-    print("Let's see if baby can reach this apple~!")
-    test_input = np.array([[0.0, 0.0,  0.6, 0.8,  0.12, 0.15]])
-    actions, _ = baby_robot.forward(test_input)
+    # ── Quick peek at how well we did ─────────────────────────────
+    print("Some example predictions after training:\n")
+    test_x = np.array([
+        [0.0,  0.0],
+        [1.5,  1.0],
+        [-2.0, 1.5],
+        [2.5, -1.0]
+    ])
+    pred, _ = model.forward(test_x)
+    true_tanh = np.tanh(np.sin(test_x[:,0] + test_x[:,1]))
 
-    print("\nBaby robot wiggles:")
-    print("   Joint 1 :", f"{actions[0,0]:+.3f}")
-    print("   Joint 2 :", f"{actions[0,1]:+.3f}")
-    print("   Joint 3 :", f"{actions[0,2]:+.3f}")
-    print("   Joint 4 :", f"{actions[0,3]:+.3f}")
-    print("\nGood job baby! ฅ^•ﻌ•^ฅ 🍎✨")
+    for i in range(len(test_x)):
+        print(f"  x = {test_x[i]}   →   pred = {pred[i,0]:+6.4f}    "
+              f"(should be ≈ {true_tanh[i,0]:+6.4f})")
 
-    print("\nYou can now play with baby_robot.forward() or train with your own data!")
-    print("Have fun~ ♡")
+    print("\nYou're all set! Feel free to:")
+    print("  • change lr (try 0.005, 0.03, …)")
+    print("  • make hidden bigger or smaller")
+    print("  • add more epochs")
+    print("  • invent your own target function")
+    print("\nHappy learning & coding~ 🌸✨")
